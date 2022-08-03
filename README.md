@@ -52,7 +52,7 @@ Then start the server with the following command:
 npm run start
 ```
 
-[Video detailing setting up the backend and its functionality can be found here]().
+[Video detailing setting up the backend and its functionality can be found here](https://watch.screencastify.com/v/SpMk6Njn4RhpOGmqj849).
 
 ## Contributors
 - Axel
