@@ -5,14 +5,35 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // get all products
 router.get('/', (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
+	// Lists all products and all nested data related (tags).
+	Product.findAll({
+		include: {
+			all: true,
+			nested: true
+		}
+	}).then(productsFound => {
+		return res.json(productsFound);
+	}).catch(err => {
+		res.status(500).json({ message: "Server error retrieving data.", err });
+	});
 });
 
 // get one product
 router.get('/:id', (req, res) => {
-  // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
+	// Find specific product by id.
+	Product.findOne({
+		where: {
+			id: req.params.id
+		},
+		include: {
+			all: true,
+			nested: true
+		}
+	}).then(productFound => {
+		return res.json(productFound);
+	}).catch(err => {
+		res.status(500).json({ message: "Server error retrieving data.", err });
+	});
 });
 
 // create new product
@@ -23,28 +44,27 @@ router.post('/', (req, res) => {
       price: 200.00,
       stock: 3,
       tagIds: [1, 2, 3, 4]
+	  category_id: 1
     }
   */
-  Product.create(req.body)
-    .then((product) => {
-      // if there's product tags, we need to create pairings to bulk create in the ProductTag model
-      if (req.body.tagIds.length) {
-        const productTagIdArr = req.body.tagIds.map((tag_id) => {
-          return {
-            product_id: product.id,
-            tag_id,
-          };
-        });
-        return ProductTag.bulkCreate(productTagIdArr);
-      }
-      // if no product tags, just respond
-      res.status(200).json(product);
-    })
-    .then((productTagIds) => res.status(200).json(productTagIds))
-    .catch((err) => {
-      console.log(err);
-      res.status(400).json(err);
-    });
+	Product.create(req.body)
+	.then(product => {
+		// Check if tags. Pair if so to bulk create in productTag model.
+		if (req.body.tagIds.length) {
+			const productTagIdArr = req.body.tagIds.map(tag_id => {
+				return {
+					product_id: product.id,
+					tag_id
+				};
+			});
+			return ProductTag.bulkCreate(productTagIdArr);
+		}
+		return res.status(200).json(product);
+	}).then(productTagIds => {
+		return res.status(200).json(productTagIds)
+	}).catch(err => {
+		res.status(500).json({ message: "Server error retrieving data.", err });
+	});
 });
 
 // update product
@@ -90,7 +110,19 @@ router.put('/:id', (req, res) => {
 });
 
 router.delete('/:id', (req, res) => {
-  // delete one product by its `id` value
+	// Deletes product specified by ID value.
+	Product.destroy({
+		where: {
+			id: req.params.id
+		}
+	}).then(product => {
+		// Fails to destroy if there is nothing there originally.
+		if (!product)
+			return res.status(404).json({ message: "No such product found."});
+		return res.json(product); // 1 (true) if deleted.
+	}).catch(err => {
+		res.status(500).json({ message: "Server error retrieving data.", err });
+	})
 });
 
 module.exports = router;
